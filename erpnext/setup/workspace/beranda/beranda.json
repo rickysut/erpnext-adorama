@@ -1,0 +1,47 @@
+{
+ "charts": [
+  {
+   "chart_name": "Incoming Bills (Purchase Invoice)",
+   "label": "Tagihan yang perlu dibayar"
+  },
+  {
+   "chart_name": "Profit and Loss",
+   "label": "Laba Rugi"
+  },
+  {
+   "chart_name": "Outgoing Bills (Sales Invoice)",
+   "label": "Invoice yang perlu ditagih"
+  },
+  {
+   "chart_name": "Bank Balance",
+   "label": "Saldo Bank"
+  }
+ ],
+ "content": "[{\"id\":\"Ty-m3vFNrl\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Laba Rugi\",\"col\":6}},{\"id\":\"pLNgdZRj-L\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Saldo Bank\",\"col\":6}},{\"id\":\"wwX8MGdP3F\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Tagihan yang perlu dibayar\",\"col\":6}},{\"id\":\"NJjGRSZb5U\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Invoice yang perlu ditagih\",\"col\":6}}]",
+ "creation": "2025-01-13 17:18:06.988612",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "image-view",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Beranda",
+ "links": [],
+ "modified": "2025-03-26 00:18:37.661850",
+ "modified_by": "Administrator",
+ "module": "Setup",
+ "name": "Beranda",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "restrict_to_domain": "",
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Beranda"
+}

@@ -1,0 +1,41 @@
+<div class="text-center">
+	<h2>{%= __("Sales Person Summary") %}</h2>
+	<h4>{%= filters.company %}</h4>
+	{% if (filters.branch) { %}
+	<h5>{%= __("Branch") %}: {%= filters.branch %}</h5>
+	{% } %}
+	<h5>{%= __("Period") %}: {%= frappe.datetime.str_to_user(filters.from_date) %} {%= __("to") %} {%= frappe.datetime.str_to_user(filters.to_date) %}</h5>
+</div>
+
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th style="width: 15%">{%= __("Sales Code") %}</th>
+			<th style="width: 25%">{%= __("Sales Person Name") %}</th>
+			<th style="width: 30%">{%= __("Penjualan Barang (B)") %}</th>
+			<th style="width: 30%">{%= __("Penjualan Cuci Cetak (F)") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %}
+			{% 
+				var row = data[i];
+				var row_class = "";
+				
+				if(row.is_total) {
+					row_class = "font-weight-bold";
+				}
+			%}
+			<tr class="{%= row_class %}">
+				<td>{%= row.sales_code %}</td>
+				<td>{%= row.sales_person_name %}</td>
+				<td class="text-right">{%= format_currency(row.penjualan_barang) %}</td>
+				<td class="text-right">{%= format_currency(row.penjualan_cuci_cetak) %}</td>
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<p class="text-right text-muted">
+	{%= __("Generated on") %}: {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>

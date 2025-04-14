@@ -1,0 +1,46 @@
+<h2 class="text-center">{%= __("Payment Method Summary") %}</h2>
+<h4 class="text-center">{%= filters.company %}</h4>
+
+<h5 class="text-center">
+	{%= frappe.datetime.str_to_user(filters.from_date) %}
+	{%= __("to") %}
+	{%= frappe.datetime.str_to_user(filters.to_date) %}
+</h5>
+<hr>
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th style="width: 40%">{%= __("Payment Method") %}</th>
+			<th style="width: 30%; text-align: right">{%= __("Total Amount") %}</th>
+			<th style="width: 30%; text-align: right">{%= __("Transaction Count") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %} <tr>
+			<td>
+				{% if(data[i].payment_method.includes("<b>")) { %}
+					<b>{%= data[i].payment_method.replace(/</?b>/g, "") %}</b>
+					{% } else { %}
+					{%= data[i].payment_method %}
+					{% } %}
+			</td>
+			<td style="text-align: right">
+				{% if(data[i].payment_method.includes("<b>")) { %}
+					<b>{%= format_currency(data[i].total_amount) %}</b>
+					{% } else { %}
+					{%= format_currency(data[i].total_amount) %}
+					{% } %}
+			</td>
+			<td style="text-align: right">
+				{% if(data[i].payment_method.includes("<b>")) { %}
+					<b>{%= data[i].transaction_count %}</b>
+					{% } else { %}
+					{%= data[i].transaction_count %}
+					{% } %}
+			</td>
+			</tr>
+			{% } %}
+	</tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>

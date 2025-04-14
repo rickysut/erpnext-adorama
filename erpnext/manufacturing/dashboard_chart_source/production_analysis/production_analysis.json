@@ -1,0 +1,13 @@
+{
+ "creation": "2025-03-25 00:38:47.740377",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2025-03-25 00:40:50.846902",
+ "modified_by": "Administrator",
+ "module": "Manufacturing",
+ "name": "PRODUCTION ANALYSIS",
+ "owner": "Administrator",
+ "source_name": "PRODUCTION ANALYSIS",
+ "timeseries": 1
+}

@@ -1,0 +1,113 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"Xa9WijUMKn\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Data</span>\",\"col\":12}},{\"id\":\"agH3pIDX_s\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Customer\",\"col\":4}},{\"id\":\"_G--34d47v\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Supplier\",\"col\":4}},{\"id\":\"-DaHImEleN\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Agent\",\"col\":4}},{\"id\":\"jkpTKJgKG2\",\"type\":\"card\",\"data\":{\"card_name\":\"Shortcut Menu\",\"col\":12}}]",
+ "creation": "2024-12-11 17:08:13.718295",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "setting-gear",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Master Data",
+ "links": [
+  {
+   "description": "Master Data Menu",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shortcut Menu",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch",
+   "link_count": 0,
+   "link_to": "Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Division",
+   "link_count": 0,
+   "link_to": "Division",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Group",
+   "link_count": 0,
+   "link_to": "Item Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Promotion / Discount",
+   "link_count": 0,
+   "link_to": "Promotional Scheme",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Articles / Products",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2024-12-11 19:14:07.122750",
+ "modified_by": "Administrator",
+ "module": "Master Data",
+ "name": "Master Data",
+ "number_cards": [
+  {
+   "label": "Customer",
+   "number_card_name": "Active Customers"
+  },
+  {
+   "label": "Supplier",
+   "number_card_name": "Active Suppliers"
+  },
+  {
+   "label": "Agent",
+   "number_card_name": "Active Agent"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Owner user"
+  },
+  {
+   "role": "IT Manager"
+  }
+ ],
+ "sequence_id": 24.0,
+ "shortcuts": [],
+ "title": "Master Data"
+}

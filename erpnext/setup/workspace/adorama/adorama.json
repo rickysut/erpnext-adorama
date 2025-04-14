@@ -1,0 +1,34 @@
+{
+ "charts": [
+  {
+   "chart_name": "Profit and Loss",
+   "label": "Laba Rugi"
+  }
+ ],
+ "content": "[]",
+ "creation": "2024-12-10 01:51:22.276448",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "image-view",
+ "idx": 1,
+ "indicator_color": "",
+ "is_hidden": 1,
+ "label": "Adorama",
+ "links": [],
+ "modified": "2025-01-31 13:20:58.775996",
+ "modified_by": "owner@adorama.co.id",
+ "module": "Setup",
+ "name": "Adorama",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "ERPNext Integrations",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 22.0,
+ "shortcuts": [],
+ "title": "Adorama"
+}
