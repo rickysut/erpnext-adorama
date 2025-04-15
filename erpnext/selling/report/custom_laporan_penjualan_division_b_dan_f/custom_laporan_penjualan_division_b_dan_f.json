@@ -1,0 +1,48 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-04-15 11:22:13.601110",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letter_head": "ADORAMA 2",
+ "letterhead": null,
+ "modified": "2025-04-15 11:28:42.842879",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Custom Laporan Penjualan Division B Dan F",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Order",
+ "report_name": "Custom Laporan Penjualan Division B Dan F",
+ "report_type": "Report Builder",
+ "roles": [
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "IT Manager"
+  },
+  {
+   "role": "Staff Sales"
+  }
+ ],
+ "timeout": 0
+}
