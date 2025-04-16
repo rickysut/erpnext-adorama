@@ -75,28 +75,31 @@ def get_data(filters):
 	# Combine data from sales orders and sales invoices
 	combined_data = orders_with_items + invoices_with_items
 
+	# Pre-process to remove N/A entries if there are real sales persons for the same transaction
+	processed_data = pre_process_data(combined_data)
+
 	# Group data by sales person
-	data = group_by_sales_person(combined_data)
+	data = group_by_sales_person(processed_data)
 
 	# Add grand total row
 	data = add_grand_total(data)
 
 	return data
 
+def pre_process_data(combined_data):
+	# First check if there are any real sales persons in the entire dataset
+	has_any_real_sales_person = any(row.get("sales_person") != "N/A" for row in combined_data)
+
+	# If there are real sales persons, remove ALL N/A entries from the entire dataset
+	if has_any_real_sales_person:
+		return [row for row in combined_data if row.get("sales_person") != "N/A"]
+
+	# Otherwise, keep all entries
+	return combined_data
+
 def get_sales_invoices_with_items(filters):
-	# Base filters for sales invoices
-	si_filters = {
-		"company": filters.get("company"),
-		"posting_date": ["between", [filters.get("from_date"), filters.get("to_date")]],
-		"docstatus": 1
-	}
-
-	# Add branch filter if specified and not empty
-	if filters.get("branch") and filters.get("branch").strip():
-		si_filters["branch_id"] = filters.get("branch")
-
-	# Build the SQL query with proper filters
-	query = """
+	# Build a simple query without the item_group filter first
+	base_query = """
 		SELECT name, posting_date
 		FROM `tabSales Invoice`
 		WHERE docstatus = 1
@@ -105,23 +108,39 @@ def get_sales_invoices_with_items(filters):
 		AND company = %(company)s
 	"""
 
-	# Add branch filter if specified and not empty
-	if filters.get("branch") and filters.get("branch").strip():
-		query += " AND branch_id = %(branch)s"
-
-	# Prepare query parameters with proper date formatting
-	query_params = {
+	# Prepare base query parameters
+	base_params = {
 		"from_date": filters.get("from_date"),
 		"to_date": filters.get("to_date"),
 		"company": filters.get("company")
 	}
 
-	# Add branch to parameters if specified and not empty
+	# Add branch filter if specified
 	if filters.get("branch") and filters.get("branch").strip():
-		query_params["branch"] = filters.get("branch")
+		base_query += " AND branch_id = %(branch)s"
+		base_params["branch"] = filters.get("branch")
 
-	# Execute the query
-	sales_invoices = frappe.db.sql(query, query_params, as_dict=1)
+	# Get all sales invoices matching the base criteria
+	base_sales_invoices = frappe.db.sql(base_query, base_params, as_dict=1)
+
+	# If item_group filter is specified, filter the results further
+	if filters.get("item_group"):
+		filtered_sales_invoices = []
+		for si in base_sales_invoices:
+			# Check if this sales invoice has items in the specified item group
+			items_in_group = frappe.db.sql("""
+				SELECT 1 FROM `tabSales Invoice Item` sii
+				JOIN `tabItem` item ON sii.item_code = item.name
+				WHERE sii.parent = %s AND item.item_group = %s
+				LIMIT 1
+			""", (si.name, filters.get("item_group")), as_dict=1)
+
+			if items_in_group:
+				filtered_sales_invoices.append(si)
+
+		sales_invoices = filtered_sales_invoices
+	else:
+		sales_invoices = base_sales_invoices
 
 	result = []
 
@@ -141,6 +160,13 @@ def get_sales_invoices_with_items(filters):
 					"sales_person": "N/A",
 					"allocated_percentage": 100.0
 				}]
+			# Make sure total allocation is 100%
+			else:
+				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
+				if total_allocation != 100.0:
+					# Adjust allocations proportionally
+					for sp in sales_team:
+						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
 		except Exception:
 			# Use 'N/A' as sales person if there's an error
 			sales_team = [{
@@ -213,9 +239,10 @@ def get_sales_invoices_with_items(filters):
 					"sales_code": "N/A"
 				})
 
-			# Use full amount regardless of allocated_percentage
-			penjualan_barang = flt(division_totals.get("B", 0))
-			penjualan_cuci_cetak = flt(division_totals.get("F", 0))
+			# Use amount based on allocated_percentage
+			allocated_percent = flt(sp.get("allocated_percentage") if isinstance(sp, dict) else sp.allocated_percentage) / 100.0
+			penjualan_barang = flt(division_totals.get("B", 0)) * allocated_percent
+			penjualan_cuci_cetak = flt(division_totals.get("F", 0)) * allocated_percent
 
 			# Other divisions have been removed as requested
 			other_divisions = {}
@@ -256,19 +283,8 @@ def get_sales_invoices_with_items(filters):
 	return result
 
 def get_sales_orders_with_items(filters):
-	# Base filters for sales orders
-	so_filters = {
-		"company": filters.get("company"),
-		"transaction_date": ["between", [filters.get("from_date"), filters.get("to_date")]],
-		"docstatus": 1
-	}
-
-	# Add branch filter if specified and not empty
-	if filters.get("branch") and filters.get("branch").strip():
-		so_filters["order_branch"] = filters.get("branch")
-
-	# Build the SQL query with proper filters - COMPLETELY NEW QUERY
-	query = """
+	# Build a simple query without the item_group filter first
+	base_query = """
 		SELECT name, transaction_date
 		FROM `tabSales Order`
 		WHERE docstatus = 1
@@ -277,27 +293,39 @@ def get_sales_orders_with_items(filters):
 		AND company = %(company)s
 	"""
 
-	# Add branch filter if specified and not empty
-	if filters.get("branch") and filters.get("branch").strip():
-		query += " AND order_branch = %(branch)s"
-
-	# Prepare query parameters with proper date formatting
-	query_params = {
+	# Prepare base query parameters
+	base_params = {
 		"from_date": filters.get("from_date"),
 		"to_date": filters.get("to_date"),
 		"company": filters.get("company")
 	}
 
-	# Process filters without logging
-
-	# Add branch to parameters if specified and not empty
+	# Add branch filter if specified
 	if filters.get("branch") and filters.get("branch").strip():
-		query_params["branch"] = filters.get("branch")
+		base_query += " AND order_branch = %(branch)s"
+		base_params["branch"] = filters.get("branch")
 
-	# Execute query without logging
+	# Get all sales orders matching the base criteria
+	base_sales_orders = frappe.db.sql(base_query, base_params, as_dict=1)
 
-	# Execute the query
-	sales_orders = frappe.db.sql(query, query_params, as_dict=1)
+	# If item_group filter is specified, filter the results further
+	if filters.get("item_group"):
+		filtered_sales_orders = []
+		for so in base_sales_orders:
+			# Check if this sales order has items in the specified item group
+			items_in_group = frappe.db.sql("""
+				SELECT 1 FROM `tabSales Order Item` soi
+				JOIN `tabItem` item ON soi.item_code = item.name
+				WHERE soi.parent = %s AND item.item_group = %s
+				LIMIT 1
+			""", (so.name, filters.get("item_group")), as_dict=1)
+
+			if items_in_group:
+				filtered_sales_orders.append(so)
+
+		sales_orders = filtered_sales_orders
+	else:
+		sales_orders = base_sales_orders
 
 	# Process results without logging
 
@@ -317,20 +345,18 @@ def get_sales_orders_with_items(filters):
 
 			# If no sales team, create a default entry with 100% allocation to "Not Assigned"
 			if not sales_team:
-				# Try to find a sales person to use as default
-				default_sales_persons = frappe.get_all("Sales Person", limit=1)
-				if default_sales_persons:
-					default_sales_person = default_sales_persons[0].name
-					sales_team = [{
-						"sales_person": default_sales_person,
-						"allocated_percentage": 100.0
-					}]
-				else:
-					# Use 'N/A' as sales person if no sales person exists
-					sales_team = [{
-						"sales_person": "N/A",
-						"allocated_percentage": 100.0
-					}]
+				# Use 'N/A' as sales person if no sales team
+				sales_team = [{
+					"sales_person": "N/A",
+					"allocated_percentage": 100.0
+				}]
+			# Make sure total allocation is 100%
+			else:
+				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
+				if total_allocation != 100.0:
+					# Adjust allocations proportionally
+					for sp in sales_team:
+						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
 		except Exception:
 			# Use 'N/A' as sales person if there's an error
 			sales_team = [{
@@ -407,9 +433,10 @@ def get_sales_orders_with_items(filters):
 					"sales_code": "N/A"
 				})
 
-			# Use full amount regardless of allocated_percentage
-			penjualan_barang = flt(division_totals.get("B", 0))
-			penjualan_cuci_cetak = flt(division_totals.get("F", 0))
+			# Use amount based on allocated_percentage
+			allocated_percent = flt(sp.get("allocated_percentage") if isinstance(sp, dict) else sp.allocated_percentage) / 100.0
+			penjualan_barang = flt(division_totals.get("B", 0)) * allocated_percent
+			penjualan_cuci_cetak = flt(division_totals.get("F", 0)) * allocated_percent
 
 			# Other divisions have been removed as requested
 			other_divisions = {}
@@ -469,8 +496,6 @@ def group_by_sales_person(orders_with_items):
 				"total_penjualan": 0
 			}
 
-			# Division fields have been removed as requested
-
 			sales_person_summary[sales_person] = summary_entry
 
 		sales_person_summary[sales_person]["penjualan_barang"] += flt(row.get("penjualan_barang"))
@@ -479,11 +504,13 @@ def group_by_sales_person(orders_with_items):
 		# Calculate total penjualan
 		sales_person_summary[sales_person]["total_penjualan"] = flt(sales_person_summary[sales_person]["penjualan_barang"]) + flt(sales_person_summary[sales_person]["penjualan_cuci_cetak"])
 
-		# Division fields have been removed as requested
-
 	# Convert to list
 	result = []
 	for sales_person, summary in sales_person_summary.items():
+		# Skip entries with zero values
+		if summary["total_penjualan"] == 0:
+			continue
+
 		entry = {
 			"sales_code": summary.get("sales_code", ""),
 			"sales_person_name": summary["sales_person_name"],
@@ -491,8 +518,6 @@ def group_by_sales_person(orders_with_items):
 			"penjualan_cuci_cetak": summary["penjualan_cuci_cetak"],
 			"total_penjualan": summary["total_penjualan"]
 		}
-
-		# Division fields have been removed as requested
 
 		result.append(entry)
 

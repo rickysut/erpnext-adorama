@@ -1,0 +1,49 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-04-16 10:28:31.051921",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "javascript": "",
+ "letter_head": "",
+ "letterhead": null,
+ "modified": "2025-04-16 13:11:10.278751",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Test Script Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Order",
+ "report_name": "Test Script Report",
+ "report_script": "columns = [\n    {\n        'fieldname': 'item_code',\n        'label': _('Article'),\n        'fieldtype': 'Data',\n        'options': 'User',\n        'width': 200\n    },\n    {\n        'fieldname': 'description',\n        'label': _('Description'),\n        'fieldtype': 'Data',\n        'align': 'left',\n        'width': 200\n    },\n    {\n        'fieldname': 'item_division',\n        'label': _('Division'),\n        'fieldtype': 'Data',\n        'width': 120\n    },\n    {\n        'fieldname': 'item_dept',\n        'label': _('Branch'),\n        'fieldtype': 'Data',\n        'width': 120\n    },\n    {\n        'fieldname': 'qty',\n        'label': _('Qty'),\n        'fieldtype': 'Float',\n        'width': 80\n    },\n    {\n        'fieldname': 'grand_total',\n        'label': _('Bruto'),\n        'fieldtype': 'Currency',\n        'width': 120\n    },\n    {\n        'fieldname': 'discount',\n        'label': _('Discount'),\n        'fieldtype': 'Currency',\n        'width': 100\n    },\n    {\n        'fieldname': 'net_total',\n        'label': _('Netto'),\n        'fieldtype': 'Currency',\n        'width': 120\n    },\n    {\n        'fieldname': 'transaction_date',\n        'label': _('Date'),\n        'fieldtype': 'Date',\n        'width': 120\n    }\n]\n\n# SQL Query untuk mengambil data dari database\nsql = \"\"\"\nSELECT \n    soi.item_code AS item_code,\n    soi.description AS description,\n    i.item_division AS item_division,\n    i.item_dept AS item_dept,\n    soi.qty AS qty,\n    so.grand_total AS grand_total,\n    (so.grand_total - so.total_taxes_and_charges - so.net_total) AS discount,\n    so.net_total AS net_total,\n    so.transaction_date AS transaction_date\nFROM \n    `tabSales Order` so\nJOIN \n    `tabSales Order Item` soi ON soi.parent = so.name\nLEFT JOIN \n    `tabItem` i ON soi.item_code = i.name\nWHERE \n    so.docstatus = 1\nORDER BY \n    so.transaction_date DESC\n\"\"\"\n\n# Ambil hasil query sebagai list of dict\nresult_dicts = frappe.db.sql(sql, as_dict=True)\n\n# Mengambil fieldnames dari columns\nfieldnames = [col[\"fieldname\"] for col in columns]\n\n# Looping manual untuk mengonversi result_dicts ke format list of list\ndata = []\n\nfor row in result_dicts:\n    row_data = []\n    for field in fieldnames:\n        # Ambil nilai berdasarkan nama field untuk setiap row\n        row_data.append(row.get(field))\n    data.append(row_data)\n\n# Pesan tambahan (misalnya)\nmessage = None\nchart = None\nreport_summary = None\n\n# Return data lengkap ke ERPNext (dalam format yang diminta)\ndata = columns, data, message, chart, report_summary",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "IT Manager"
+  },
+  {
+   "role": "Staff Sales"
+  }
+ ],
+ "timeout": 0
+}
