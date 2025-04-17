@@ -13,7 +13,7 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "crm",
- "idx": 0,
+ "idx": 2,
  "is_hidden": 1,
  "label": "CRM",
  "links": [
@@ -419,7 +419,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-26 00:18:43.617394",
+ "modified": "2025-04-17 11:34:17.584712",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM",
@@ -430,7 +430,7 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 23.0,
+ "sequence_id": 24.0,
  "shortcuts": [
   {
    "color": "Blue",

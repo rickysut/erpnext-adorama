@@ -768,7 +768,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-26 00:18:40.581583",
+ "modified": "2025-04-17 11:34:14.891748",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Persediaan",
@@ -792,7 +792,7 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 11.0,
+ "sequence_id": 12.0,
  "shortcuts": [],
  "title": "Persediaan"
 }

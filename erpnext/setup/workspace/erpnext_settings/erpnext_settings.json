@@ -437,7 +437,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-26 00:18:44.431401",
+ "modified": "2025-04-17 11:34:17.900985",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "ERPNext Settings",
@@ -448,7 +448,7 @@
  "quick_lists": [],
  "restrict_to_domain": "",
  "roles": [],
- "sequence_id": 25.0,
+ "sequence_id": 26.0,
  "shortcuts": [
   {
    "color": "Grey",

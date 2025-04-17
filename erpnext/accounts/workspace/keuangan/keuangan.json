@@ -479,7 +479,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-26 00:18:38.473696",
+ "modified": "2025-04-17 11:34:13.139888",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Keuangan",
@@ -520,7 +520,7 @@
    "role": "Owner user"
   }
  ],
- "sequence_id": 4.0,
+ "sequence_id": 5.0,
  "shortcuts": [],
  "title": "Keuangan"
 }

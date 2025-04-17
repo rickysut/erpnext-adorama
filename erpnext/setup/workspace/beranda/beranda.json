@@ -30,7 +30,7 @@
  "is_hidden": 0,
  "label": "Beranda",
  "links": [],
- "modified": "2025-03-26 00:18:37.661850",
+ "modified": "2025-04-17 11:35:25.439804",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Beranda",
@@ -40,7 +40,11 @@
  "public": 1,
  "quick_lists": [],
  "restrict_to_domain": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
  "sequence_id": 1.0,
  "shortcuts": [],
  "title": "Beranda"
