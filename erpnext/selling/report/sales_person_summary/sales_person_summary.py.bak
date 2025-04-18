@@ -33,7 +33,7 @@ def get_columns(filters):
 			"label": _("Sales Code"),
 			"fieldname": "sales_code",
 			"fieldtype": "Data",
-			"width": 90
+			"width": 100
 		},
 		{
 			"label": _("Sales Person Name"),
@@ -72,33 +72,14 @@ def get_data(filters):
 	# Get sales invoices with items (for division B)
 	invoices_with_items = get_sales_invoices_with_items(filters)
 
-	# Debug: Print raw data
-	# print("\nOrders with items:")
-	# for order in orders_with_items:
-	# 	print(f"Order: {order.get('sales_order')}, Sales Person: {order.get('sales_person')}, B: {order.get('penjualan_barang')}, F: {order.get('penjualan_cuci_cetak')}")
-
-	# print("\nInvoices with items:")
-	# for invoice in invoices_with_items:
-	# 	print(f"Invoice: {invoice.get('sales_invoice')}, Sales Person: {invoice.get('sales_person')}, B: {invoice.get('penjualan_barang')}, F: {invoice.get('penjualan_cuci_cetak')}")
-
 	# Combine data from sales orders and sales invoices
 	combined_data = orders_with_items + invoices_with_items
 
 	# Pre-process to remove N/A entries if there are real sales persons for the same transaction
 	processed_data = pre_process_data(combined_data)
 
-	# Debug: Print combined data
-	# print("\nCombined data after pre-processing:")
-	# for item in processed_data:
-	# 	print(f"Item: {item.get('sales_order') or item.get('sales_invoice')}, Sales Person: {item.get('sales_person')}, B: {item.get('penjualan_barang')}, F: {item.get('penjualan_cuci_cetak')}")
-
 	# Group data by sales person
 	data = group_by_sales_person(processed_data)
-
-	# Debug: Print grouped data
-	# print("\nGrouped data:")
-	# for item in data:
-	# 	print(f"Sales Person: {item.get('sales_person_name')}, B: {item.get('penjualan_barang')}, F: {item.get('penjualan_cuci_cetak')}, Total: {item.get('total_penjualan')}")
 
 	# Add grand total row
 	data = add_grand_total(data)
@@ -106,7 +87,14 @@ def get_data(filters):
 	return data
 
 def pre_process_data(combined_data):
-	# Keep all entries, including N/A entries
+	# First check if there are any real sales persons in the entire dataset
+	has_any_real_sales_person = any(row.get("sales_person") != "N/A" for row in combined_data)
+
+	# If there are real sales persons, remove ALL N/A entries from the entire dataset
+	if has_any_real_sales_person:
+		return [row for row in combined_data if row.get("sales_person") != "N/A"]
+
+	# Otherwise, keep all entries
 	return combined_data
 
 def get_sales_invoices_with_items(filters):
@@ -156,28 +144,42 @@ def get_sales_invoices_with_items(filters):
 
 	result = []
 
-	# Debug: Print all sales invoices
-	# print("\nAll Sales Invoices:")
-	# for si in sales_invoices:
-	# 	print(f"SI: {si.name}, Date: {si.posting_date}")
-
 	# For each sales invoice, get the sales team and items
 	for si in sales_invoices:
+		# Get sales team for this sales invoice
+		try:
+			sales_team = frappe.get_all(
+				"Sales Team",
+				filters={"parent": si.name, "parenttype": "Sales Invoice"},
+				fields=["sales_person", "allocated_percentage"]
+			)
+
+			# If no sales team, create a default entry with 100% allocation to "N/A"
+			if not sales_team:
+				sales_team = [{
+					"sales_person": "N/A",
+					"allocated_percentage": 100.0
+				}]
+			# Make sure total allocation is 100%
+			else:
+				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
+				if total_allocation != 100.0:
+					# Adjust allocations proportionally
+					for sp in sales_team:
+						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
+		except Exception:
+			# Use 'N/A' as sales person if there's an error
+			sales_team = [{
+				"sales_person": "N/A",
+				"allocated_percentage": 100.0
+			}]
+
 		# Get items for this sales invoice
 		items = frappe.get_all(
 			"Sales Invoice Item",
 			filters={"parent": si.name},
 			fields=["item_code", "item_name", "item_group", "amount"]
 		)
-
-		# Skip if no items
-		if not items:
-			continue
-
-		# Debug: Print items for this sales invoice
-		# print(f"\nItems for {si.name}:")
-		# for item in items:
-		# 	print(f"Item: {item.item_code}, Amount: {item.amount}")
 
 		# Assign divisions to items based ONLY on item_division from Item table
 		for item in items:
@@ -195,6 +197,10 @@ def get_sales_invoices_with_items(filters):
 				except:
 					pass
 
+		# Skip if no items
+		if not items:
+			continue
+
 		# Group items by division
 		division_totals = {"B": 0, "F": 0}
 
@@ -208,42 +214,6 @@ def get_sales_invoices_with_items(filters):
 				division_totals["F"] += amount
 			elif division == "B":
 				division_totals["B"] += amount
-
-		# Debug: Print division totals
-		# print(f"Division totals for {si.name}: B={division_totals['B']}, F={division_totals['F']}")
-
-		# Get sales team for this sales invoice
-		try:
-			sales_team = frappe.get_all(
-				"Sales Team",
-				filters={"parent": si.name, "parenttype": "Sales Invoice"},
-				fields=["sales_person", "allocated_percentage"]
-			)
-
-			# Debug: Print sales team
-			# print(f"Sales team for {si.name}: {sales_team}")
-
-			# If no sales team, create a default entry with 100% allocation to "N/A"
-			if not sales_team:
-				sales_team = [{
-					"sales_person": "N/A",
-					"allocated_percentage": 100.0
-				}]
-				# print(f"No sales team for {si.name}, using N/A")
-			# Make sure total allocation is 100%
-			else:
-				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
-				if total_allocation != 100.0:
-					# Adjust allocations proportionally
-					for sp in sales_team:
-						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
-		except Exception as e:
-			# Use 'N/A' as sales person if there's an error
-			print(f"Error getting sales team for {si.name}: {str(e)}")
-			sales_team = [{
-				"sales_person": "N/A",
-				"allocated_percentage": 100.0
-			}]
 
 		# For each sales person in the team, create an entry
 		for sp in sales_team:
@@ -263,7 +233,6 @@ def get_sales_invoices_with_items(filters):
 					sales_person_doc = frappe.get_doc("Sales Person", sales_person_name)
 			except frappe.DoesNotExistError:
 				# Use 'N/A' if sales person doesn't exist
-				print(f"Sales person {sales_person_name} does not exist")
 				sales_person_doc = frappe._dict({
 					"name": "N/A",
 					"sales_person_name": "Not Assigned",
@@ -274,9 +243,6 @@ def get_sales_invoices_with_items(filters):
 			allocated_percent = flt(sp.get("allocated_percentage") if isinstance(sp, dict) else sp.allocated_percentage) / 100.0
 			penjualan_barang = flt(division_totals.get("B", 0)) * allocated_percent
 			penjualan_cuci_cetak = flt(division_totals.get("F", 0)) * allocated_percent
-
-			# Debug: Print calculated values
-			# print(f"Calculated values for {sales_person_doc.sales_person_name}: B={penjualan_barang}, F={penjualan_cuci_cetak}")
 
 			# Other divisions have been removed as requested
 			other_divisions = {}
@@ -367,28 +333,43 @@ def get_sales_orders_with_items(filters):
 
 	result = []
 
-	# Debug: Print all sales orders
-	# print("\nAll Sales Orders:")
-	# for so in sales_orders:
-	# 	print(f"SO: {so.name}, Date: {so.transaction_date}")
-
 	# For each sales order, get the sales team and items
 	for so in sales_orders:
+		# Get sales team for this sales order
+		try:
+			sales_team = frappe.get_all(
+				"Sales Team",
+				filters={"parent": so.name, "parenttype": "Sales Order"},
+				fields=["sales_person", "allocated_percentage"]
+			)
+
+			# If no sales team, create a default entry with 100% allocation to "Not Assigned"
+			if not sales_team:
+				# Use 'N/A' as sales person if no sales team
+				sales_team = [{
+					"sales_person": "N/A",
+					"allocated_percentage": 100.0
+				}]
+			# Make sure total allocation is 100%
+			else:
+				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
+				if total_allocation != 100.0:
+					# Adjust allocations proportionally
+					for sp in sales_team:
+						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
+		except Exception:
+			# Use 'N/A' as sales person if there's an error
+			sales_team = [{
+				"sales_person": "N/A",
+				"allocated_percentage": 100.0
+			}]
+
 		# Get items for this sales order with item_group
 		items = frappe.get_all(
 			"Sales Order Item",
 			filters={"parent": so.name},
 			fields=["item_code", "item_name", "item_group", "amount"]
 		)
-
-		# Skip if no items
-		if not items:
-			continue
-
-		# Debug: Print items for this sales order
-		# print(f"\nItems for {so.name}:")
-		# for item in items:
-		# 	print(f"Item: {item.item_code}, Amount: {item.amount}")
 
 		# Assign divisions to items based ONLY on item_division from Item table
 		for item in items:
@@ -406,6 +387,13 @@ def get_sales_orders_with_items(filters):
 				except:
 					pass
 
+			# If no division found, default to empty (will be excluded from both categories)
+			# We don't use item_name or item_group to determine division
+
+		# Skip if no items
+		if not items:
+			continue
+
 		# Group items by division
 		division_totals = {"B": 0, "F": 0}
 
@@ -420,43 +408,6 @@ def get_sales_orders_with_items(filters):
 			elif division == "B":
 				division_totals["B"] += amount
 			# Items without division are not counted in either category
-
-		# Debug: Print division totals
-		# print(f"Division totals for {so.name}: B={division_totals['B']}, F={division_totals['F']}")
-
-		# Get sales team for this sales order
-		try:
-			sales_team = frappe.get_all(
-				"Sales Team",
-				filters={"parent": so.name, "parenttype": "Sales Order"},
-				fields=["sales_person", "allocated_percentage"]
-			)
-
-			# Debug: Print sales team
-			# print(f"Sales team for {so.name}: {sales_team}")
-
-			# If no sales team, create a default entry with 100% allocation to "Not Assigned"
-			if not sales_team:
-				# Use 'N/A' as sales person if no sales team
-				sales_team = [{
-					"sales_person": "N/A",
-					"allocated_percentage": 100.0
-				}]
-				# print(f"No sales team for {so.name}, using N/A")
-			# Make sure total allocation is 100%
-			else:
-				total_allocation = sum(flt(sp.get("allocated_percentage", 0)) for sp in sales_team)
-				if total_allocation != 100.0:
-					# Adjust allocations proportionally
-					for sp in sales_team:
-						sp["allocated_percentage"] = flt(sp.get("allocated_percentage", 0)) * 100.0 / total_allocation if total_allocation else 0
-		except Exception as e:
-			# Use 'N/A' as sales person if there's an error
-			print(f"Error getting sales team for {so.name}: {str(e)}")
-			sales_team = [{
-				"sales_person": "N/A",
-				"allocated_percentage": 100.0
-			}]
 
 		# For each sales person in the team, create an entry
 		for sp in sales_team:
@@ -476,7 +427,6 @@ def get_sales_orders_with_items(filters):
 					sales_person_doc = frappe.get_doc("Sales Person", sales_person_name)
 			except frappe.DoesNotExistError:
 				# Use 'N/A' if sales person doesn't exist
-				print(f"Sales person {sales_person_name} does not exist")
 				sales_person_doc = frappe._dict({
 					"name": "N/A",
 					"sales_person_name": "Not Assigned",
@@ -488,11 +438,11 @@ def get_sales_orders_with_items(filters):
 			penjualan_barang = flt(division_totals.get("B", 0)) * allocated_percent
 			penjualan_cuci_cetak = flt(division_totals.get("F", 0)) * allocated_percent
 
-			# Debug: Print calculated values
-			# print(f"Calculated values for {sales_person_doc.sales_person_name}: B={penjualan_barang}, F={penjualan_cuci_cetak}")
-
 			# Other divisions have been removed as requested
 			other_divisions = {}
+
+			# Always add the entry, even if sales are zero
+			# This ensures that sales persons are shown in the report even if they have no sales
 
 			# Get sales_code from the Sales Person DocType
 			sales_code = ""
@@ -530,96 +480,24 @@ def get_sales_orders_with_items(filters):
 	return result
 
 def group_by_sales_person(orders_with_items):
-	# Group by sales person and transaction
+	# Group by sales person
 	sales_person_summary = {}
-	# Track processed transactions globally to avoid double counting
-	processed_transactions = set()
 
-	# First pass: Process all transactions with assigned sales persons
 	for row in orders_with_items:
 		sales_person = row.get("sales_person")
-		transaction_key = ""
 
-		# Skip N/A entries in first pass
-		if sales_person == "N/A":
-			continue
-
-		# Create a unique key for each transaction
-		if row.get("sales_order"):
-			transaction_key = f"SO-{row.get('sales_order')}"
-		elif row.get("sales_invoice"):
-			transaction_key = f"SI-{row.get('sales_invoice')}"
-		else:
-			continue  # Skip if no transaction reference
-
-		# Add to processed transactions
-		processed_transactions.add(transaction_key)
-
-		# Initialize sales person entry if not exists
 		if sales_person not in sales_person_summary:
-			sales_person_summary[sales_person] = {
+			# Initialize with standard fields
+			summary_entry = {
 				"sales_code": row.get("sales_code"),
 				"sales_person_name": row.get("sales_person_name"),
 				"penjualan_barang": 0,
 				"penjualan_cuci_cetak": 0,
-				"total_penjualan": 0,
-				"transactions": set()  # Track processed transactions
+				"total_penjualan": 0
 			}
 
-		# Check if this transaction has already been processed for this sales person
-		if transaction_key in sales_person_summary[sales_person]["transactions"]:
-			continue
+			sales_person_summary[sales_person] = summary_entry
 
-		# Add transaction to processed list
-		sales_person_summary[sales_person]["transactions"].add(transaction_key)
-
-		# Add values
-		sales_person_summary[sales_person]["penjualan_barang"] += flt(row.get("penjualan_barang"))
-		sales_person_summary[sales_person]["penjualan_cuci_cetak"] += flt(row.get("penjualan_cuci_cetak"))
-
-		# Calculate total penjualan
-		sales_person_summary[sales_person]["total_penjualan"] = flt(sales_person_summary[sales_person]["penjualan_barang"]) + flt(sales_person_summary[sales_person]["penjualan_cuci_cetak"])
-
-	# Second pass: Process N/A entries only for transactions not already processed
-	for row in orders_with_items:
-		sales_person = row.get("sales_person")
-		transaction_key = ""
-
-		# Only process N/A entries in second pass
-		if sales_person != "N/A":
-			continue
-
-		# Create a unique key for each transaction
-		if row.get("sales_order"):
-			transaction_key = f"SO-{row.get('sales_order')}"
-		elif row.get("sales_invoice"):
-			transaction_key = f"SI-{row.get('sales_invoice')}"
-		else:
-			continue  # Skip if no transaction reference
-
-		# Skip if this transaction has already been processed
-		if transaction_key in processed_transactions:
-			continue
-
-		# Initialize sales person entry if not exists
-		if sales_person not in sales_person_summary:
-			sales_person_summary[sales_person] = {
-				"sales_code": row.get("sales_code"),
-				"sales_person_name": row.get("sales_person_name"),
-				"penjualan_barang": 0,
-				"penjualan_cuci_cetak": 0,
-				"total_penjualan": 0,
-				"transactions": set()  # Track processed transactions
-			}
-
-		# Check if this transaction has already been processed for this sales person
-		if transaction_key in sales_person_summary[sales_person]["transactions"]:
-			continue
-
-		# Add transaction to processed list
-		sales_person_summary[sales_person]["transactions"].add(transaction_key)
-
-		# Add values
 		sales_person_summary[sales_person]["penjualan_barang"] += flt(row.get("penjualan_barang"))
 		sales_person_summary[sales_person]["penjualan_cuci_cetak"] += flt(row.get("penjualan_cuci_cetak"))
 
@@ -629,14 +507,9 @@ def group_by_sales_person(orders_with_items):
 	# Convert to list
 	result = []
 	for sales_person, summary in sales_person_summary.items():
-		# Include entries with zero values
-		# Commented out to include entries with zero values
-		# if summary["total_penjualan"] == 0:
-		# 	continue
-
-		# Remove the transactions set before returning (not needed in output)
-		if "transactions" in summary:
-			del summary["transactions"]
+		# Skip entries with zero values
+		if summary["total_penjualan"] == 0:
+			continue
 
 		entry = {
 			"sales_code": summary.get("sales_code", ""),
