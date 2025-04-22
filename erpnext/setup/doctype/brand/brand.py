@@ -16,9 +16,11 @@ class Brand(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+		from frappe.core.doctype.has_role.has_role import HasRole
 
 		brand: DF.Data
 		brand_sku: DF.Data
+		brand_defaults: DF.Table[HasRole]
 	# end: auto-generated types
 
 	pass
@@ -29,10 +31,12 @@ def get_brand_defaults(item, company):
 	if item.brand:
 		brand = frappe.get_cached_doc("Brand", item.brand)
 
-		for d in brand.brand_defaults or []:
-			if d.company == company:
-				row = copy.deepcopy(d.as_dict())
-				row.pop("name")
-				return row
+		# Check if brand_defaults attribute exists
+		if hasattr(brand, 'brand_defaults') and brand.brand_defaults:
+			for d in brand.brand_defaults:
+				if d.company == company:
+					row = copy.deepcopy(d.as_dict())
+					row.pop("name")
+					return row
 
 	return frappe._dict()
