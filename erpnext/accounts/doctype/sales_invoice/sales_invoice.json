@@ -2201,8 +2201,7 @@
    "fieldname": "branch_id",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch",
-   "reqd": 1
+   "options": "Branch"
   }
  ],
  "grid_page_length": 50,
@@ -2216,7 +2215,7 @@
    "link_fieldname": "consolidated_invoice"
   }
  ],
- "modified": "2025-03-26 15:34:39.809365",
+ "modified": "2025-04-23 12:28:45.588105",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
