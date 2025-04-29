@@ -86,6 +86,7 @@
   "column_break_53",
   "is_frozen",
   "disabled",
+  "allow_production",
   "portal_users_tab",
   "portal_users"
  ],
@@ -605,6 +606,12 @@
    "label": "Code",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_production",
+   "fieldtype": "Check",
+   "label": "Allow production before payment"
   }
  ],
  "grid_page_length": 50,
@@ -619,7 +626,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-04-03 16:39:46.983446",
+ "modified": "2025-04-29 13:27:21.003510",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

@@ -39,6 +39,7 @@ class Customer(TransactionBase):
 
 		account_manager: DF.Link | None
 		accounts: DF.Table[PartyAccount]
+		allow_production: DF.Check
 		companies: DF.Table[AllowedToTransactWith]
 		credit_limits: DF.Table[CustomerCreditLimit]
 		customer_branch: DF.Link | None
